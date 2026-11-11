@@ -25,8 +25,6 @@ On first start the API container generates the synthetic source files, runs the 
 
 ![Work queue screenshot](docs/screenshot.png)
 
-_Screenshot placeholder: save a capture of the work queue to `docs/screenshot.png`._
-
 ## Architecture
 
 ```mermaid
