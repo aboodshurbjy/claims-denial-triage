@@ -1,0 +1,32 @@
+-- Nickname -> formal first name, used to compare first names across sources.
+CREATE OR REPLACE TABLE staged.nickname AS
+SELECT * FROM (VALUES
+    ('BILL', 'WILLIAM'), ('BILLY', 'WILLIAM'), ('WILL', 'WILLIAM'), ('LIAM', 'WILLIAM'),
+    ('BOB', 'ROBERT'), ('BOBBY', 'ROBERT'), ('ROB', 'ROBERT'),
+    ('LIZ', 'ELIZABETH'), ('BETH', 'ELIZABETH'), ('BETTY', 'ELIZABETH'),
+    ('KATE', 'KATHERINE'), ('KATIE', 'KATHERINE'), ('KATHY', 'KATHERINE'),
+    ('MIKE', 'MICHAEL'), ('MIKEY', 'MICHAEL'),
+    ('JEN', 'JENNIFER'), ('JENNY', 'JENNIFER'),
+    ('CHRIS', 'CHRISTOPHER'),
+    ('PEGGY', 'MARGARET'), ('MAGGIE', 'MARGARET'), ('MEG', 'MARGARET'),
+    ('TONY', 'ANTHONY'),
+    ('PAT', 'PATRICIA'), ('PATTY', 'PATRICIA'), ('TRISH', 'PATRICIA'),
+    ('DAN', 'DANIEL'), ('DANNY', 'DANIEL'),
+    ('BECKY', 'REBECCA'), ('BECCA', 'REBECCA'),
+    ('JOE', 'JOSEPH'), ('JOEY', 'JOSEPH'),
+    ('SAM', 'SAMANTHA'),
+    ('BEN', 'BENJAMIN'),
+    ('ALEX', 'ALEXANDER'),
+    ('VICKY', 'VICTORIA'), ('TORI', 'VICTORIA'),
+    ('NICK', 'NICHOLAS'),
+    ('STEPH', 'STEPHANIE'),
+    ('JON', 'JONATHAN'),
+    ('JIM', 'JAMES'), ('JIMMY', 'JAMES'),
+    ('TOM', 'THOMAS'), ('TOMMY', 'THOMAS'),
+    ('DICK', 'RICHARD'), ('RICK', 'RICHARD'), ('RICH', 'RICHARD'),
+    ('SUE', 'SUSAN'), ('SUZY', 'SUSAN'),
+    ('DAVE', 'DAVID'),
+    ('STEVE', 'STEVEN'),
+    ('CHUCK', 'CHARLES'), ('CHARLIE', 'CHARLES'),
+    ('TED', 'EDWARD'), ('ED', 'EDWARD'), ('EDDIE', 'EDWARD')
+) AS t(nickname, canonical);
