@@ -1,0 +1,65 @@
+# Payer ruleset: synthetic State Medicaid behavioral health plan.
+#
+# This file is the single source of payer policy. Changing a threshold or a
+# service code here changes behaviour without touching code. Bump `version`
+# with every change and add a line to the changelog; the version is stamped
+# on every rule trace so a result can always be tied to the policy that
+# produced it.
+#
+# Changelog
+#   2025.1.0  Initial six rules.
+
+version: "2025.1.0"
+payer: "State Medicaid Behavioral Health (synthetic)"
+effective_date: 2025-04-01
+
+# Share of the billed amount counted as "at risk" for the queue ranking.
+risk_weights:
+  fail: 1.0
+  warn: 0.25
+
+service_codes:
+  H0031:
+    description: Mental health assessment
+    requires_auth: false
+    max_units_per_day: 1
+  H0004:
+    description: Behavioral health counseling, 15 min
+    requires_auth: true
+    max_units_per_day: 8
+  H2017:
+    description: Psychosocial rehabilitation, 15 min
+    requires_auth: true
+    max_units_per_day: 16
+  H0036:
+    description: Community psychiatric support, 15 min
+    requires_auth: true
+    max_units_per_day: 12
+  T1017:
+    description: Targeted case management, 15 min
+    requires_auth: false
+    max_units_per_day: 8
+  "90837":
+    description: Psychotherapy, 60 min
+    requires_auth: false
+    max_units_per_day: 1
+
+# Rules run in this order. Remove a rule or set `enabled: false` to switch it off.
+rules:
+  - id: eligibility_on_dos
+    name: Eligibility on date of service
+  - id: auth_exists
+    name: Authorization exists
+  - id: service_inside_auth_window
+    name: Service inside authorization window
+  - id: units_under_cap
+    name: Units under cap
+    params:
+      utilization_warn_pct: 90     # warn when an auth is this much used
+  - id: duplicate_claim
+    name: Duplicate claim
+  - id: timely_filing
+    name: Timely filing
+    params:
+      limit_days: 90               # days from date of service
+      warn_days_remaining: 15
