@@ -168,6 +168,34 @@ Thresholds, service codes and the rule list live in `rules/medicaid_bh.yaml`.
 
 **Dollars at risk** is the billed amount weighted by the claim's worst result: 100% for a fail, 25% for a warn (both set in the ruleset). The queue is sorted by it, descending.
 
+## Validation
+
+The answer key comes from this project's own synthetic generator, so the table below confirms that the rules behave as specified on data built to exercise them; it does not show how they would do on real claims. The generator records which defect it planted in which claim and which rule should report it (`data/truth/claims_truth.csv`). The pipeline never reads that file. `triage validate` runs the rules over the built database and compares each result with the key.
+
+| Rule | Defects planted | Defects caught | Clean claims wrongly flagged |
+|---|---:|---:|---:|
+| Eligibility on date of service | 34 | 34 | 0 |
+| Authorization exists | 60 | 60 | 0 |
+| Service inside authorization window | 18 | 18 | 0 |
+| Units under cap | 33 | 33 | 0 |
+| Duplicate claim | 21 | 21 | 0 |
+| Timely filing | 24 | 24 | 0 |
+| **Total** | **190** | **190** | **0** |
+
+Seed 42, 622 claims: 190 with a planted defect, 432 clean.
+
+- **Planted** is the number of claims the answer key assigns to the rule.
+- **Caught** means the rule returned the exact status the key expects, warn or fail. A fail where the key expects a warn does not count.
+- **Wrongly flagged** counts clean claims on which the rule returned anything other than pass.
+
+To reproduce:
+
+```bash
+triage generate && triage build && triage validate
+```
+
+`triage validate` prints the table and exits non-zero if any planted defect is missed or any clean claim is flagged. `tests/test_validation.py` makes the same check on every test run.
+
 ## API
 
 | Endpoint | Purpose |
@@ -200,7 +228,8 @@ pip install -e ".[dev]"
 
 triage generate          # write synthetic sources to data/raw
 triage build             # run the SQL pipeline and assertions -> data/triage.duckdb
-pytest                   # rules, entity resolution, pipeline, API
+triage validate          # score the rules against the generator's answer key
+pytest                   # rules, entity resolution, pipeline, API, validation
 triage serve             # API on :8000
 
 cd ui && npm install && npm run dev    # UI on :5173, proxied to the API
