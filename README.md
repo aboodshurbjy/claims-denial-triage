@@ -4,7 +4,7 @@ Pre-submission claim triage for a small Medicaid behavioral health agency.
 
 ## The problem
 
-Small behavioral health agencies lose revenue to denials that were predictable before the claim ever left the building: the member lost eligibility, the authorization expired or ran out of units, the claim was keyed twice, or the filing deadline passed. The facts needed to catch these sit in three places that do not agree with each other — a billing export, a monthly eligibility spreadsheet, and an authorization feed — so nobody checks them together. This project joins those sources into one clean model, runs the payer's rules over every unsubmitted claim, and hands the biller a queue ordered by the dollars at stake.
+Small behavioral health agencies lose revenue to denials that were predictable before the claim was submitted: the member lost eligibility, the authorization expired or ran out of units, the claim was keyed twice, or the filing deadline passed. The facts needed to catch these sit in a billing export, a monthly eligibility spreadsheet and an authorization feed. The three do not agree with each other, so nobody checks them together. This project joins them into one model, runs the payer's rules over every unsubmitted claim, and gives the biller a queue ordered by the dollars at stake.
 
 All data in this repository is synthetic. No real patient, member, provider or claim information is used anywhere.
 
@@ -76,7 +76,7 @@ flowchart LR
 
 ## The messy sources
 
-The generator plants the defects a real agency lives with, and writes an answer key (`data/truth/`) that the tests check the pipeline and rules against.
+The generator plants the kinds of defect a real agency deals with and writes an answer key (`data/truth/`). The tests check the pipeline and rules against that key.
 
 | Source | Defects |
 |---|---|
@@ -147,11 +147,11 @@ erDiagram
 
 The roster lists the same person many times, rarely the same way twice. Resolution runs in SQL (`sql/staged/30_member_resolution.sql`):
 
-1. **Normalise.** IDs are reduced to ten digits with leading zeros restored; names are upper-cased and stripped to letters; nicknames map to formal names; birth dates are parsed from every format in use.
-2. **Match.** Two roster records are the same person when they share a Medicaid ID, or when the birth date is identical and both first and last names match (exact, close spelling, or one surname being the start of the other).
-3. **Cluster.** Matches are chained, so a record with a missing ID and a record under a new ID still land on the same member.
+1. Normalise. IDs are reduced to ten digits with leading zeros restored. Names are upper-cased and stripped to letters, and nicknames map to formal names. Birth dates are parsed from every format in use.
+2. Match. Two roster records are the same person when they share a Medicaid ID, or when the birth date is identical and both first and last names match (exact, close spelling, or one surname being the start of the other).
+3. Cluster. Matches are chained, so a record with a missing ID and a record under a new ID still land on the same member.
 
-Twins (same surname and birth date, different first names and IDs) stay separate. Claims and authorizations link to a member by ID first, and by name and birth date only when the ID finds nobody and the fallback is unambiguous. A claim that matches nobody is kept with a null member rather than dropped, so the eligibility rule can report it.
+Twins (same surname and birth date, different first names and IDs) stay separate. Claims and authorizations link to a member by ID first, and by name and birth date only when the ID finds nobody and the fallback is unambiguous. A claim that matches nobody is kept with a null member, so the eligibility rule can report it.
 
 ## Rules
 
@@ -159,18 +159,18 @@ Twins (same surname and birth date, different first names and IDs) stay separate
 |---|---|---|
 | Eligibility on date of service | The patient is not on the roster, or has no coverage on the date | The member was matched by name because the ID on the claim is wrong |
 | Authorization exists | The service needs an auth and none is on file; the cited number is unknown, denied, or belongs to another member or service | The auth number is missing from the claim but an approved auth is on file; the auth is pending |
-| Service inside authorization window | The date of service is before the auth starts or after it ends | — |
+| Service inside authorization window | The date of service is before the auth starts or after it ends | n/a |
 | Units under cap | Units exceed the daily cap for the code, or push the auth past its approved units | The auth is 90% or more used |
 | Duplicate claim | An earlier claim has the same member, provider, service and date | Same member, service and date under a different provider |
 | Timely filing | More than 90 days since the date of service | 15 days or fewer remain |
 
 Thresholds, service codes and the rule list live in `rules/medicaid_bh.yaml`.
 
-**Dollars at risk** is the billed amount weighted by the claim's worst result: 100% for a fail, 25% for a warn (both set in the ruleset). The queue is sorted by it, descending.
+Dollars at risk is the billed amount weighted by the claim's worst result: 100% for a fail, 25% for a warn (both set in the ruleset). The queue is sorted by it, descending.
 
 ## Validation
 
-The answer key comes from this project's own synthetic generator, so the table below confirms that the rules behave as specified on data built to exercise them; it does not show how they would do on real claims. The generator records which defect it planted in which claim and which rule should report it (`data/truth/claims_truth.csv`). The pipeline never reads that file. `triage validate` runs the rules over the built database and compares each result with the key.
+The answer key comes from this project's own synthetic generator. The table below confirms that the rules behave as specified on data built to exercise them. It does not show how they would do on real claims. The generator records which defect it planted in which claim and which rule should report it (`data/truth/claims_truth.csv`). The pipeline never reads that file. `triage validate` runs the rules over the built database and compares each result with the key.
 
 | Rule | Defects planted | Defects caught | Clean claims wrongly flagged |
 |---|---:|---:|---:|
@@ -184,9 +184,9 @@ The answer key comes from this project's own synthetic generator, so the table b
 
 Seed 42, 622 claims: 190 with a planted defect, 432 clean.
 
-- **Planted** is the number of claims the answer key assigns to the rule.
-- **Caught** means the rule returned the exact status the key expects, warn or fail. A fail where the key expects a warn does not count.
-- **Wrongly flagged** counts clean claims on which the rule returned anything other than pass.
+- "Planted" is the number of claims the answer key assigns to the rule.
+- "Caught" means the rule returned the exact status the key expects, warn or fail. A fail where the key expects a warn does not count.
+- "Wrongly flagged" counts clean claims on which the rule returned anything other than pass.
 
 To reproduce:
 
@@ -216,7 +216,7 @@ curl -s localhost:8000/check -H 'content-type: application/json' -d '{
 }'
 ```
 
-"Mark fixed" records that the biller corrected the claim in the billing system and moves it out of the open queue; the next export re-evaluates it from scratch.
+"Mark fixed" records that the biller corrected the claim in the billing system and moves it out of the open queue. The next export re-evaluates it from scratch.
 
 ## Development
 
@@ -237,30 +237,6 @@ cd ui && npm install && npm run dev    # UI on :5173, proxied to the API
 
 The synthetic dataset is anchored to 30 June 2025, and the API evaluates timely filing as of that date so the results do not drift as the calendar moves. Set `TRIAGE_AS_OF=YYYY-MM-DD` to evaluate as of another day.
 
-## Design decisions
+## Design
 
-### Why rules are pure functions
-
-Each rule is a function of `(claim, context, parameters)` that returns a status and a reason. `rules.py` imports only the standard library: no database, no web framework, no YAML parser, no clock. A test enforces that.
-
-- **Testable in isolation.** A rule test builds a claim and a few facts in memory and asserts the result. There is no database to seed and nothing to mock, which is why every boundary (the last covered day, the 90th day, the unit that tips an auth over) has its own test.
-- **Deterministic.** The evaluation date is an input, never read from the system. The same claim and facts always produce the same trace, so a result can be reproduced months later when a denial is disputed.
-- **One implementation, many callers.** `POST /check`, the evaluation of the whole queue, and the test suite all call the same functions. There is no second copy of the logic in SQL or in the UI to fall out of step.
-- **Explainable.** A rule cannot return a status without a reason, so the trace a biller reads is produced by the same code path that made the decision.
-- **Portable.** Because the rules know nothing about DuckDB or FastAPI, either can be replaced without touching payer logic.
-
-### Why rules are versioned
-
-Payer policy changes: filing limits move, codes start requiring authorization, unit caps are revised. Policy therefore lives in a YAML file with an explicit `version` and `effective_date`, kept in git, rather than in constants scattered through code.
-
-- **Every result names its policy.** The ruleset version is stamped on every trace and API response. "Why did this pass last month and fail today?" has a checkable answer: the data changed, or the version did.
-- **Policy changes are reviewable.** Raising a threshold is a one-line diff in a file a billing lead can read, with a changelog entry, not a code change.
-- **Auditable history.** Checking out an old version of the file reproduces what the system would have said under the old policy.
-- **Safe to change.** The loader rejects unknown rule names, duplicates and missing fields at startup, so a bad edit fails loudly instead of silently skipping a check.
-
-### Other choices
-
-- **DuckDB and plain SQL.** The data is small and file-based. One embedded database reads CSV and JSON directly and needs no server; plain `.sql` files keep each transformation readable by anyone who knows SQL. The Excel roster is the one source read in Python, because spreadsheet cells are typed and must be flattened to text first.
-- **Raw is kept as delivered.** Nothing is cleaned on the way in, so any surprising result can be traced back to the exact source row.
-- **Assertions are queries.** Each file in `sql/tests/` selects the rows that violate an expectation. Error-level violations stop the build; warn-level ones (for example, claims whose patient is not on the roster) are reported and left for the rules to surface.
-- **Unmatched claims are kept.** Dropping a claim because its member could not be resolved would hide exactly the claim most likely to be denied.
+Each rule is a pure function of the claim, the facts around it and its parameters. The evaluation date is an input, so the rules never read the clock and a result can be reproduced later. Payer policy (thresholds, service codes, the rule list) lives in a versioned YAML ruleset kept in git, and the version is stamped on every trace. The reasons for these and the other choices are in [docs/design.md](docs/design.md).
