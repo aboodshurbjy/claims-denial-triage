@@ -1,6 +1,5 @@
 -- severity: error
 -- Coverage spans are well-formed and do not overlap within a member.
--- Returns the offending rows; an empty result means the assertion holds.
 SELECT a.member_id, a.coverage_start, a.coverage_end FROM object.member_eligibility a
 WHERE a.coverage_end < a.coverage_start
    OR EXISTS (

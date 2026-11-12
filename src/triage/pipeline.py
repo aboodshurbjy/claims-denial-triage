@@ -71,8 +71,8 @@ def _cell_text(value: object) -> str | None:
 def read_roster_workbook(path: Path) -> list[tuple]:
     """Rows from every sheet as (sheet, row number, *ROSTER_COLUMNS values) text tuples.
 
-    Sheets start with title lines, so the header is located by its first
-    column rather than assumed to be on row 1.
+    Sheets start with title lines, so the header is found by its first
+    column. It is not always on row 1.
     """
     rows: list[tuple] = []
     workbook = load_workbook(path, read_only=True, data_only=True)
