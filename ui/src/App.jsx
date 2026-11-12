@@ -206,7 +206,7 @@ function ClaimPanel({ claimId, onClose, onChanged }) {
             <Field label="Auth # on claim">{detail.claim.auth_number}</Field>
             <Field label="Auth window">
               {detail.authorization
-                ? `${day(detail.authorization.start_date)} – ${
+                ? `${day(detail.authorization.start_date)} to ${
                     detail.authorization.end_date ? day(detail.authorization.end_date) : "open-ended"
                   } · ${detail.authorization.units_approved ?? "?"} units · ${detail.authorization.status}`
                 : null}
